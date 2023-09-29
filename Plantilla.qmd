@@ -1,0 +1,135 @@
+---
+title: "Plantilla Proyecto"
+author: "Alumno"
+format: html
+editor: visual
+---
+
+```{r configuraciones}
+#| message: false
+#| echo: false
+# Esto ya debiera estar cargado en el proyecto en posit.cloud
+# devtools::install_github("business-science/tidyquant")
+# Loads tidyquant, lubridate, xts, quantmod, TTR, and PerformanceAnalytics
+library(tidyverse)
+library(tidyquant)  
+```
+
+## Descripción Activo y Contexto (Hito 1)
+
+Fecha de entrega: Jueves 28 de Septiembre 23:59.
+
+### Definición
+
+Las inmobiliarias son empresas que se dedican a la compra, venta y alquiler de bienes inmuebles. Son un actor importante en la economía, ya que facilitan la circulación de la propiedad inmobiliaria y contribuyen al desarrollo económico.
+
+El siguiente activo a estudiar es Parque Arauco S.A, PARAUCO, una empresa inmobiliaria siendo una de las principales a nivel Latinoamérica. Se enfoca en la compra, venta y arriendo de bienes inmuebles, además de desarrollar y operar activos inmobiliarios. Por otro lado, en términos de expansión, cuenta con sede en países Perú y Colombia, además de chile, donde los activos suman más de un millón de metros cuadrados de superficie arrendable a nivel consolidado, y con un portafolio de 22 centros comerciales.
+
+```{r ETL}
+#| echo: false
+# Alternativamente Use FANG data set
+# data("FANG") 
+end <- as_date("2022-12-31")
+# Get AAPL and AMZN Stock Prices
+# AAPL <- tq_get("AAPL", get = "stock.prices", from = "2015-09-01", to = end)
+# AMZN <- tq_get("AMZN", get = "stock.prices", from = "2000-01-01", to = end)
+CMPC <- tq_get("CMPC.SN", get = "stock.prices", from = "2000-01-01", to = end)
+VAPORES <- tq_get("VAPORES.SN", get = "stock.prices", from = "2000-01-01", to = end)
+CONCHATORO <- tq_get("CONCHATORO.SN", get = "stock.prices", from = "2000-01-01", to = end)
+CL <- rbind(CMPC,VAPORES,CONCHATORO)
+```
+
+El activo CMPC tiene un valor promedio para el intervalo igual a `r round(mean(CMPC$close),digits=0)`
+
+```{r CMPCline}
+#| echo: false
+CMPC %>%
+    ggplot(aes(x = date, y = close)) +
+    geom_line() +
+    labs(title = "CMPC Line Chart", y = "Closing Price", x = "") + 
+    theme_tq() +
+  geom_hline(yintercept=mean(CMPC$close), linetype="dashed", color = "red")
+```
+
+```{r CMPCcandle}
+#| warning: false
+CMPC %>%
+    ggplot(aes(x = date, y = close)) +
+    geom_candlestick(aes(open = open, high = high, low = low, close = close)) +
+    labs(title = "AAPL Candlestick Chart", y = "Closing Price", x = "") +
+    theme_tq()
+```
+
+### Motivación
+
+El objetivo de este estudio es poder analizar a "PARAUCO", ya que es una de las empresas inmobiliarias más importante de Chile y Latino América. Viéndolo como un activo inmobiliario es interesante saber que estos activos tienen, una gran rentabilidad, teniendo en cuenta su riesgo y que son a largo plazo, ya que el inmueble suele aumentar con el tiempo. También existe una seguridad en estos activos ya que son tangibles, por lo que tienen un valor real, generando garantía. Por último, más allá de lo dicho siempre se recomiendo diversificar ya sea con estos activos, o con otros tipos de activos en portafolio variado. Es por eso que PARAUCO, es un gran empresa a analizar ya que es de las más grandes e importantes del sector inmobiliario..  centros comerciales.  crficie dado de un millon de mria siendo una de las priniccipales a nivel la
+
+### Contexto
+
+Parque Arauco, es una empresa inmobiliaria, que se especializa en la construcción inmobiliaria, ya sea de hogares como centros comerciales. Uno de sus activos principales son los centros comerciales, en este caso se hablará específicamente de centros comerciales en chile. Cuenta con un total de 14 centros comerciales a lo largo de Chile, siendo uno de estos el primero de Chile en 1982. Estos activos suman un total de 514.500 metros cuadrados de superficie, siendo la más grande suma de centros comerciales en Chile.
+
+```{r context}
+#| warning: false
+#| echo: false
+start <- end - weeks(6)
+
+CL %>%
+    filter(date >= start - days(2 * 15)) %>%
+    ggplot(aes(x = date, y = close, group = symbol)) +
+    geom_candlestick(aes(open = open, high = high, low = low, close = close)) +
+    geom_ma(ma_fun = SMA, n = 15, color = "darkblue", size = 1) +
+    labs(title = "CL Candlestick Chart", 
+         subtitle = "Experimenting with Mulitple Stocks",
+         y = "Closing Price", x = "") + 
+    coord_x_date(xlim = c(start, end)) +
+    facet_wrap(~ symbol, ncol = 2, scale = "free_y") +
+    theme_tq()
+```
+
+### Análisis de Largo Plazo
+
+#### Caracterización deuda (Aplicación cap. 15)
+
+La empresa Parque Arauco, cuenta con diversas deudas, las destacables son:
+
+Pr un lado tenemos principalmente a terrenos, edificios, proyectos inmobiliarios en curso y otras construcciones que se mantienen para explotarlos en régimen de arriendo, las cuales son valorizadas y presentadas a su valor justo que ha sido determinado en base a valuaciones realizadas por la administración. Los saldos al 31 de diciembre de 2022 son los siguientes:
+
+propiedad de inversion en construccion o desarrollo:84.889.758M\$
+
+propiedad de inversion completada:2.162.839.861M\$
+
+con un total de: 2.341.871.546
+
+También se tiene los arrendamientos financieros asociados a propiedades de inversión (leasing) son los siguientes:
+
+centros comerciales vecinales con Aruaco Express S.A: 3.982.822
+
+Bulevar rentas inmobiliarias S.A 25.430.334:
+
+sumando un total de: 29.413.156 M\$
+
+Por el lado de las acciones tenemos lo siguente, al 30 de junio de 2023 y 31 de diciembre de 2022 es M\$423.575.312 y M\$423.575.312, respectivamente, que corresponde a 905.715.882 acciones de serie única, totalmente suscritas y pagadas. Los movimientos de las acciones para los periodos indicados es el siguiente:
+
+al 30 de junio de 2023 fueron 905.715.882 acciones en circulacion saldo inicial y al 31 de diciembre de 2022 fueron las mismas
+
+Por últimos tenemos los bonos donde en la siguiente tabla detalla los cambios en los pasivos que se originan de actividades de financiamiento de la Sociedad, al 30 de junio de 2023 y 31 de diciembre de 2022. Los saldos corresponden a las porciones corrientes y no corrientes.Con un saldo total inicial de la fecha dicha de 1.101.515.530 llegando a un saldo final de 1.151.630.009 M\$
+
+#### Caracterización de emisiones históricas (Aplicación cap. 20)
+
+Sobre la emisión de acciones como tal se destaca lo dicho anteriormente, estas 905.715.882 acciones nominativas, las cuales van en aumento, dado que cada año se van emitiendo más acciones de Parque Arauco.
+
+Por otro lado, tenemos las emisiones de bonos correspondientes al primer programa privado de la sociedad Inmuebles Panamericana S.A. están garantizados por los flujos del fideicomiso de los centros comerciales: Megaplaza Express Villa El Salvador I, MegaPlaza Chorrillos, MegaPlaza Express Barranca, MegaPlaza Express Chincha, MegaPlaza Cañete y MegaPlaza Pisco. Llegando a un saldo final de 1.151.630.009 M\$
+
+#### Relación con activos derivados
+
+Los derivados implícitos en contratos anfitriones que no sean activos financieros dentro del alcance de NIIF 9 son tratados como derivados separados cuando cumplen la definición de un derivado, sus riesgos y características no están relacionados estrechamente con los correspondientes a los contratos anfitriones y los contratos anfitriones no son medidos a VRCCR. Los derivados implícitos en contratos híbridos que contienen un anfitrión dentro del alcance de NIIF 9 no son separados. El contrato híbrido en su totalidad se clasifica y mide posteriormente ya sea a costo amortizado o a VRCCR, según sea apropiado
+
+Parque Arauco S.A. mantiene derivados de cobertura para cubrir los riesgos asociados con las fluctuaciones en las tasas de interés y del tipo de cambio. El objetivo de la Sociedad respecto de la mantención de derivados es minimizar estos riesgos utilizando el método más efectivo para eliminar o reducir el impacto de estas exposiciones. Los instrumentos derivados se reconocen inicialmente a su valor razonable, el que es determinado en referencia a los valores de mercado.
+
+PARTE GRUPAL
+
+Para el reporte grupal se observaron los rendimientos de cada uno de los activos, aparte de sus rendimientos y se asignaron los porcentajes a invertir en el portafolio.
+
+Dado los valores de los rendimientos, se decidió invertir más en Enel, dado que es una empresa que genera muchos ingreso. Para el caso del Parque Arauco, se ve que es el segundo con mayor rentabilidad, pero tiene una alta variabilidad con el mercado, esto dado por ulitmos eventos mundiales como el covid y otros que han reentelizado la construccion, ademas de la inflacion que ha vividop chile en especificio que hace haya caido estas rentabilidad y haya una mayor variabilidad. Por último esta el Banco de Chile, que es el que tiene menor rentabilidad y menor beta, esto corresponde porque los bancos son fuertemente regulados.
+
+Se puede ver que es necesario que el portafolio este diversificado entre los distintos activos, de esta manera no va a perder valor si está todo invertido en uno.
