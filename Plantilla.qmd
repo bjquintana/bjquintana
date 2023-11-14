@@ -133,3 +133,134 @@ Para el reporte grupal se observaron los rendimientos de cada uno de los activos
 Dado los valores de los rendimientos, se decidió invertir más en Enel, dado que es una empresa que genera muchos ingreso. Para el caso del Parque Arauco, se ve que es el segundo con mayor rentabilidad, pero tiene una alta variabilidad con el mercado, esto dado por ulitmos eventos mundiales como el covid y otros que han reentelizado la construccion, ademas de la inflacion que ha vividop chile en especificio que hace haya caido estas rentabilidad y haya una mayor variabilidad. Por último esta el Banco de Chile, que es el que tiene menor rentabilidad y menor beta, esto corresponde porque los bancos son fuertemente regulados.
 
 Se puede ver que es necesario que el portafolio este diversificado entre los distintos activos, de esta manera no va a perder valor si está todo invertido en uno.
+
+HITO 2
+
+Tome en consideración el modelo continuio de Black and Scholes:
+
+C(S,t)=S⋅Φ(d1)−Kexp(−R⋅t)⋅Φ(d2)
+
+donde d1=logSK+(R+σ22)⋅tσ2⋅t√ y d2=d1−σ2⋅t−−−−√.
+
+Defina los parámetros asociados a valores del activo definido en la Tarea 1 y calcule el valor de una opción de compra.
+
+{python}
+# Parámetros de test
+K = 1200
+r = 0.05
+sigma = 0.278
+T = 0.7
+S = 1203.06
+vol = 0.278
+n = 100
+# Resultado esperado CALL
+# 7.28815118277163
+
+
+
+Definimos los parametros para la accion PARAUCO, donde obtuvimos algunos los datos de la bolsa de santiago y los otros fueron estimados, como el r y k y la volatilidad que fue calculada con una formula (donde se calcula la desviacion estandar de los rendimientos, dentro de un año, y se multplica por la raiz de la cantidad de rendimientos).
+
+{python}
+import numpy as np
+from scipy.stats import norm
+
+N = norm.cdf
+
+
+def BS_CALL(S, K, T, r, sigma):
+    d1 = (np.log(S/K) + (r + sigma**2/2)*T) / (sigma*np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    return S * N(d1) - K * np.exp(-r*T)* N(d2),
+
+
+def BS_PUT(S, K, T, r, sigma):
+    d1 = (np.log(S/K) + (r + sigma**2/2)*T) / (sigma*np.sqrt(T))
+    d2 = d1 - sigma* np.sqrt(T)
+    return K*np.exp(-r*T)*N(-d2) - S*N(-d1),
+
+call_price = BS_CALL(S, K, T, r, sigma)
+put_price = BS_PUT(S, K, T, r, sigma)
+
+print("Valor de la opción call:", call_price)
+print("Valor de la opción put:", put_price)
+
+Segundo Modelo de Valoracion
+
+Como segundo modelo de valoracion de opciones, se utilizara Montecarlo, donde la formula a desarollar es la siguente:
+
+Donde el "Precio de la Opción" es el precio actual de la opción, "N" es el número de simulaciones, "Payoff(Si)" es el valor de ejercicio de la opción en el escenario i, " Si" es el precio del activo subyacente en el escenario i, "r" es la tasa de interés libre de riesgo, "T" es el tiempo hasta la expiración de la opción.
+
+Montecarlo se basa en la generación de múltiples escenarios aleatorios para calcular el precio de una opción. Como se menciono anteriormente se se generan múltiples precios del activo subyacente utilizando números aleatorios. Estos escenarios representan posibles evoluciones futuras del precio del activo subyacente. Luego se calcula el valor de la opcion en cada escenario en la fecha de vencimiento. Se tiene que si la diferencia entre precio del activo subyacente y el precio del ejercicio es positivo es compra europea y si es negativo es venta europea. Se continua calculando el promedio de los valores de ejercicio de todos los escenarios generados, generando un valor estimado de la opcion. Por ultimo, El valor promedio calculado se descuenta al valor presente utilizando la tasa de interés libre de riesgo. El resultado es el precio actual de la opción.
+
+{python}
+# Parámetros de test
+K = 1200
+r = 0.035
+sigma = 0.278
+T = 0.7
+S = 1203.06
+vol = 0.278
+n = 100
+# Resultado esperado CALL
+# 7.28815118277163
+
+{python}
+import numpy as np
+
+# Parámetros de las opciones
+precio_subyacente = 1203.6  # Precio del activo subyacente
+precio_ejercicio = 1208   # Precio de ejercicio de la opción
+volatilidad = 0.278       # Volatilidad del activo subyacente
+tasa_interes = 0.05     # Tasa de interés libre de riesgo
+tiempo_expiracion = 0.7   # Tiempo hasta la expiración de la opción
+numero_simulaciones = 10000
+
+# Generar números aleatorios para los retornos logarítmicos
+np.random.seed(42)
+retornos_log = np.random.normal((tasa_interes - 0.5 * volatilidad**2) * tiempo_expiracion,
+                               volatilidad * np.sqrt(tiempo_expiracion),
+                               numero_simulaciones)
+
+# Calcular el precio del activo subyacente al vencimiento
+precio_subyacente_vencimiento = precio_subyacente * np.exp(retornos_log)
+
+# Calcular el valor de la opción de compra (call) en cada simulación
+valor_call = np.maximum(0, precio_subyacente_vencimiento - precio_ejercicio)
+
+# Calcular el valor de la opción de venta (put) en cada simulación
+valor_put = np.maximum(0, precio_ejercicio - precio_subyacente_vencimiento)
+
+# Calcular el precio promedio de la opción de compra
+precio_call_promedio = np.mean(valor_call)
+
+# Calcular el precio promedio de la opción de venta
+precio_put_promedio = np.mean(valor_put)
+
+# Calcular el valor presente de los precios promedio de las opciones
+valor_presente_call = precio_call_promedio / (1 + tasa_interes) ** tiempo_expiracion
+valor_presente_put = precio_put_promedio / (1 + tasa_interes) ** tiempo_expiracion
+
+print("El precio de la opción call es:", valor_presente_call)
+print("El precio de la opción put es:", valor_presente_put)
+
+
+
+Teniendo ambos modelos ya desarrollados podemos analizar y ver en que difieren estos modelos, en un principio nos damos cuenta que tanto el call como en put los resultados son distintos con un valor de call 132.91 y put 88.57 para Black Scholes y un valor de call 129.40 y put 92.59 para Montecarlo, esto se debe a que al utilizar Black Scholes donde se basa en supuestos simplificados sobre los precios, en cambio Montecarlo utiliza una simulación de múltiples trayectorias de precios. Otra diferencia son los supuestos, donde Black Scholes supone una volatilidad constante y una tasa de interés constante, lo que puede no reflejar adecuadamente la realidad, debido que no varian, por otro lado,Montecarlo incorpora una amplia gama de supuestos, lo que lo hace más adaptable a situaciones variadas y se adecua mejor a la realidad. Tambien difieren en la precision de los resultados. Por último, la diferencia entre los resultados de los modelos Black Scholes y Montecarlo, es debido a que Black Scholes proporciona valores constantes en cada ejecución, mientras que Montecarlo, arroja resultados que pueden variar de una ejecución a otra debido a la naturaleza estocástica de la simulación.
+
+Parte Grupal
+
+Para esta parte, se desarrollo el caso de Braam Industries, que se encuentra en la página 874 del ROSS, la cual trata de administración de efectivo. Los resultados a las preguntas del caso, se muestran en la siguiente foto:
+
+Primero se deben poner las 3 opciones, las cuales fueron elegidas en el hito 1, son Banco de Chile, Enel y Parque Arauco.
+
+La primera pregunta a responder es, Ventas Anuales, que corresponde a las ventas dentro de un año de cada activo en millones de dolares, donde Enel tuvo la mayor venta anual. Luego se desarrolla la Tasa de Incumplimiento, la cual se calcula sacando el porcentaje de prestamos en morosidad (que aún no se pagan) respecto al total de ventas anuales por cada opcion, donde la mayor tasa es del Banco de Chile, lo cual hace sentido al ser un banco.
+
+Luego se calculan los Costos Administrativos, en donde se calcula sacando el porcentaje de gastos de administracion respecto al total de ventas anuales por cada opcion, donde el mayor porcentaje de gasto administrativo lo tiene Banco de Chile.
+
+Para la resolver el Periodo de Cuentas por Cobrar, se utilizo una proporcion similar a la expuesta en el libro.
+
+Por último, se obtiene el calculo de VPN para cada opción, esto mediante el calculo de Excel, donde el mayor VPN lo tiene ENEL luego Banco de Chile y por ultimo Parque arauco. Por lo tanto escojemos la opcion ENEL debido que tiene el mayor VPN, y será la mejor política para la empresa.
+
+Bibliografia
+
+ Alonso, S. (2007). Real Options and Monte Carlo Simulation. Universia Business https://www.redalyc.org/articulo.oa?id=43301604
